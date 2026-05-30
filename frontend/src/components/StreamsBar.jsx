@@ -2,20 +2,21 @@ import React, { useState, useRef, useEffect } from 'react'
 import Hls from 'hls.js'
 
 const STREAMS = [
-  { id: 'arte',      name: 'ARTE',        url: 'https://artesimulcast.akamaized.net/hls/live/2031003/artelive_en/index.m3u8' },
-  { id: 'nasa',      name: 'NASA TV',     url: 'https://nasa-i.akamaihd.net/hls/live/253565/NASA-NTV1-HLS/master.m3u8' },
-  { id: 'euronews',  name: 'Euronews EN', url: 'https://euronews-euronews-world-1-eu.rakuten.wurl.tv/playlist.m3u8' },
-  { id: 'bloomberg', name: 'Bloomberg',   url: 'https://bloomberg-bloomberg-1-us.samsung.wurl.tv/playlist.m3u8' },
-  { id: 'dw',        name: 'DW English',  url: 'https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8' },
+  { id: 'dw',        name: 'DW English', url: 'https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8' },
+  { id: 'aljazeera', name: 'Al Jazeera', url: 'https://live-hls-web-aje.getaj.net/AJE/01.m3u8' },
+  { id: 'cnn',       name: 'CNN Int',    url: 'https://cnn-cnninternational-1-eu.rakuten.wurl.tv/playlist.m3u8' },
+  { id: 'france24',  name: 'France 24',  url: 'https://stream.france24.com/hls/live/2037168/F24_EN_LO_HLS/master.m3u8' },
+  { id: 'nasa',      name: 'NASA TV',    url: 'https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8' },
 ]
 
 export default function StreamsBar() {
   const [current, setCurrent] = useState(0)
   const [muted, setMuted] = useState(true)
+  const [streamError, setStreamError] = useState(false)
   const videoRef = useRef(null)
   const hlsRef = useRef(null)
 
-  useEffect(() => {
+  const loadStream = (idx) => {
     const video = videoRef.current
     if (!video) return
 
@@ -24,17 +25,26 @@ export default function StreamsBar() {
       hlsRef.current = null
     }
 
-    const url = STREAMS[current].url
+    setStreamError(false)
+    const url = STREAMS[idx].url
 
     if (Hls.isSupported()) {
       const hls = new Hls()
       hls.loadSource(url)
       hls.attachMedia(video)
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        if (data.fatal) {
+          setStreamError(true)
+        }
+      })
       hlsRef.current = hls
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = url
     }
+  }
 
+  useEffect(() => {
+    loadStream(current)
     return () => {
       if (hlsRef.current) {
         hlsRef.current.destroy()
@@ -78,8 +88,17 @@ export default function StreamsBar() {
             muted={muted}
             autoPlay
             playsInline
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            crossOrigin="anonymous"
+            style={{ width: '100%', height: '100%', objectFit: 'contain', display: streamError ? 'none' : 'block' }}
           />
+          {streamError && (
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#000', gap: 8 }}>
+              <span style={{ color: 'var(--text3)', fontSize: 11, fontFamily: 'var(--mono)' }}>Stream unavailable</span>
+              <button onClick={() => loadStream(current)} style={{ background: 'var(--panel2)', border: '1px solid var(--border)', color: 'var(--text2)', padding: '4px 12px', borderRadius: 3, fontSize: 10, cursor: 'pointer', fontFamily: 'var(--mono)' }}>
+                ↻ Retry
+              </button>
+            </div>
+          )}
           <div style={{ position: 'absolute', bottom: 6, left: 8, background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 3, fontFamily: 'var(--mono)', pointerEvents: 'none' }}>
             {STREAMS[current].name}
           </div>
