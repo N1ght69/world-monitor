@@ -1,12 +1,63 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import Hls from 'hls.js'
 
 const STREAMS = [
-  { id: 'dw',        name: 'DW English', embed: 'https://www.dw.com/en/media-center/live-tv/stream-tv-channel/s-100825' },
-  { id: 'aljazeera', name: 'Al Jazeera', embed: 'https://www.aljazeera.com/live/' },
-  { id: 'france24',  name: 'France 24',  embed: 'https://www.france24.com/en/live-news/' },
-  { id: 'euronews',  name: 'Euronews',   embed: 'https://www.euronews.com/live' },
-  { id: 'nasa',      name: 'NASA TV',    embed: 'https://www.nasa.gov/nasatv/' },
+  { id: 'dw',   name: 'DW English', url: 'https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8' },
+  { id: 'dw2',  name: 'DW Deutsch', url: 'https://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/index.m3u8' },
+  { id: 'dw3',  name: 'DW Arabia',  url: 'https://dwamdstream103.akamaized.net/hls/live/2015527/dwstream103/index.m3u8' },
+  { id: 'arte', name: 'ARTE FR',    url: 'https://artesimulcast.akamaized.net/hls/live/2031003/artelive_fr/index.m3u8' },
+  { id: 'arte2',name: 'ARTE DE',    url: 'https://artesimulcast.akamaized.net/hls/live/2031003/artelive_de/index.m3u8' },
 ]
+
+function StreamCell({ stream, style }) {
+  const videoRef = useRef(null)
+  const hlsRef = useRef(null)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    setError(false)
+
+    if (Hls.isSupported()) {
+      const hls = new Hls()
+      hls.loadSource(stream.url)
+      hls.attachMedia(video)
+      hls.on(Hls.Events.ERROR, (_, data) => { if (data.fatal) setError(true) })
+      hlsRef.current = hls
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = stream.url
+    } else {
+      setError(true)
+    }
+
+    return () => {
+      if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null }
+    }
+  }, [stream.url])
+
+  return (
+    <div style={{ position: 'relative', background: '#000', overflow: 'hidden', ...style }}>
+      {error ? (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080808' }}>
+          <span style={{ color: 'var(--text3)', fontSize: 10, fontFamily: 'var(--mono)' }}>{stream.name}</span>
+        </div>
+      ) : (
+        <video
+          ref={videoRef}
+          muted
+          autoPlay
+          playsInline
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      )}
+      <div style={{ position: 'absolute', bottom: 4, left: 6, background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 3, fontFamily: 'var(--mono)', pointerEvents: 'none' }}>
+        {stream.name}
+      </div>
+    </div>
+  )
+}
 
 export default function StreamsBar() {
   const [main, ...rest] = STREAMS
@@ -21,31 +72,13 @@ export default function StreamsBar() {
 
       {/* Grid */}
       <div style={{ flex: 1, display: 'flex', gap: 1, background: 'var(--border)', overflow: 'hidden' }}>
-        {/* Main stream — 60% */}
-        <div style={{ flex: '0 0 60%', position: 'relative', background: '#000' }}>
-          <iframe
-            src={main.embed}
-            allow="autoplay; fullscreen"
-            style={{ border: 'none', width: '100%', height: '100%' }}
-          />
-          <div style={{ position: 'absolute', bottom: 4, left: 6, background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 3, fontFamily: 'var(--mono)', pointerEvents: 'none' }}>
-            {main.name}
-          </div>
-        </div>
+        {/* Main — 60% */}
+        <StreamCell stream={main} style={{ flex: '0 0 60%' }} />
 
         {/* 2×2 grid — 40% */}
         <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 1, background: 'var(--border)' }}>
           {rest.map((s) => (
-            <div key={s.id} style={{ position: 'relative', background: '#000', overflow: 'hidden' }}>
-              <iframe
-                src={s.embed}
-                allow="autoplay; fullscreen"
-                style={{ border: 'none', width: '100%', height: '100%' }}
-              />
-              <div style={{ position: 'absolute', bottom: 3, left: 5, background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: 8, fontWeight: 600, padding: '1px 5px', borderRadius: 3, fontFamily: 'var(--mono)', pointerEvents: 'none' }}>
-                {s.name}
-              </div>
-            </div>
+            <StreamCell key={s.id} stream={s} style={{}} />
           ))}
         </div>
       </div>
