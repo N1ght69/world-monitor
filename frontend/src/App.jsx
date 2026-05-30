@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
+import { Panel, PanelGroup, ResizeHandle } from 'react-resizable-panels'
 import { io } from 'socket.io-client'
 import axios from 'axios'
 import useStore from './store'
@@ -18,10 +18,10 @@ const CHANNEL_LIST = [
 ]
 
 function ResizeHandleV() {
-  return <PanelResizeHandle className="resize-handle-v" />
+  return <ResizeHandle className="resize-handle-v" />
 }
 function ResizeHandleH() {
-  return <PanelResizeHandle className="resize-handle-h" />
+  return <ResizeHandle className="resize-handle-h" />
 }
 
 export default function App() {
