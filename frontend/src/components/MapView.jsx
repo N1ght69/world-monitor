@@ -49,13 +49,18 @@ export default function MapView() {
 
   return (
     <MapContainer
-      center={[20, 15]} zoom={3}
+      center={[20, 10]} zoom={3}
       style={{ flex: 1, height: '100%', background: 'var(--bg)' }}
       zoomControl={false}
-      attributionControl={false}>
+      attributionControl={false}
+      worldCopyJump={false}
+      maxBoundsViscosity={1.0}
+      maxBounds={[[-90, -180], [90, 180]]}
+      minZoom={2}
+      maxZoom={18}>
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        maxZoom={19}
+        noWrap={true}
         className="map-tiles"
       />
       <RegionFlyTo />
