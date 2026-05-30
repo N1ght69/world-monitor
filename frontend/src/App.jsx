@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect } from 'react'
 import { io } from 'socket.io-client'
 import axios from 'axios'
 import useStore from './store'
 import TopBar from './components/TopBar'
+import Ticker from './components/Ticker'
 import LayerSidebar from './components/LayerSidebar'
 import MapView from './components/MapView'
 import GlobeView from './components/GlobeView'
@@ -12,45 +13,10 @@ import StreamsBar from './components/StreamsBar'
 
 let socket = null
 
-function startDrag(onMove) {
-  return (e) => {
-    e.preventDefault()
-    const move = (ev) => onMove(ev)
-    const up = () => {
-      window.removeEventListener('mousemove', move)
-      window.removeEventListener('mouseup', up)
-    }
-    window.addEventListener('mousemove', move)
-    window.addEventListener('mouseup', up)
-  }
-}
-
-function Handle({ dir, onMouseDown }) {
-  const [hover, setHover] = useState(false)
-  const base = dir === 'v'
-    ? { width: 4, cursor: 'col-resize', flexShrink: 0 }
-    : { height: 4, cursor: 'row-resize', flexShrink: 0 }
-  return (
-    <div
-      onMouseDown={onMouseDown}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{ ...base, background: hover ? '#4a90e2' : '#2a3142', transition: 'background 0.15s' }}
-    />
-  )
-}
-
 export default function App() {
   const setEvents = useStore((s) => s.setEvents)
   const addNews   = useStore((s) => s.addNews)
   const is3D      = useStore((s) => s.is3D)
-
-  const [sidebarW,  setSidebarW]  = useState(200)
-  const [rightW,    setRightW]    = useState(340)
-  const [newsFeedH, setNewsFeedH] = useState(300)
-
-  const containerRef  = useRef(null)
-  const rightPanelRef = useRef(null)
 
   useEffect(() => {
     axios.get('/api/events').then((r) => setEvents(r.data)).catch(console.error)
@@ -60,59 +26,48 @@ export default function App() {
     return () => socket?.disconnect()
   }, [])
 
-  const onLeftDrag = startDrag((e) => {
-    if (!containerRef.current) return
-    const rect = containerRef.current.getBoundingClientRect()
-    setSidebarW(Math.max(120, Math.min(400, e.clientX - rect.left)))
-  })
-
-  const onRightDrag = startDrag((e) => {
-    if (!containerRef.current) return
-    const rect = containerRef.current.getBoundingClientRect()
-    setRightW(Math.max(200, Math.min(600, rect.right - e.clientX)))
-  })
-
-  const onRightSplitDrag = startDrag((e) => {
-    if (!rightPanelRef.current) return
-    const rect = rightPanelRef.current.getBoundingClientRect()
-    setNewsFeedH(Math.max(80, Math.min(rect.height - 80, e.clientY - rect.top)))
-  })
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
-      <TopBar />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden', background: '#0d1117' }}>
 
-      {/* Middle row */}
-      <div ref={containerRef} style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
+      {/* 1. Top bar */}
+      <div style={{ height: 40, flexShrink: 0 }}>
+        <TopBar />
+      </div>
+
+      {/* 2. Ticker */}
+      <div style={{ height: 32, flexShrink: 0 }}>
+        <Ticker />
+      </div>
+
+      {/* 3. Middle row */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+
         {/* Sidebar */}
-        <div style={{ width: sidebarW, flexShrink: 0, overflow: 'hidden' }}>
+        <div style={{ width: 160, flexShrink: 0, overflowY: 'auto' }}>
           <LayerSidebar />
         </div>
 
-        <Handle dir="v" onMouseDown={onLeftDrag} />
-
         {/* Map / Globe */}
-        <div style={{ flex: 1, position: 'relative', overflow: 'hidden', minWidth: 0 }}>
+        <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
           {!is3D && <MapView />}
           {is3D  && <GlobeView />}
         </div>
 
-        <Handle dir="v" onMouseDown={onRightDrag} />
-
-        {/* Right panel: NewsFeed + AIBriefing */}
-        <div ref={rightPanelRef} style={{ width: rightW, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ height: newsFeedH, flexShrink: 0, overflow: 'hidden' }}>
+        {/* Right panel */}
+        <div style={{ width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
             <NewsFeed />
           </div>
-          <Handle dir="h" onMouseDown={onRightSplitDrag} />
-          <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
-            <AIBriefing />
-          </div>
+          <AIBriefing />
         </div>
+
       </div>
 
-      {/* Bottom */}
-      <StreamsBar />
+      {/* 4. Streams bar */}
+      <div style={{ height: 220, flexShrink: 0, borderTop: '1px solid #21262d' }}>
+        <StreamsBar />
+      </div>
+
     </div>
   )
 }
