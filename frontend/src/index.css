@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --panel2: #1c2330;
+  --panel3: #21262d;
+  --border: #30363d;
+  --border2: #444c56;
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --text3: #484f58;
+  --accent: #238636;
+  --blue: #1f6feb;
+  --red: #f85149;
+  --orange: #e3703a;
+  --yellow: #d29922;
+  --amber: #d29922;
+  --purple: #8957e5;
+  --cyan: #56d364;
+  --font: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 12px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* Leaflet overrides */
+.leaflet-container { background: var(--bg) !important; }
+.leaflet-control-zoom { display: none; }
+.leaflet-control-attribution { display: none !important; }
+.leaflet-popup-content-wrapper {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border2) !important;
+  border-radius: 5px !important;
+  box-shadow: none !important;
+  font-family: var(--font) !important;
+}
+.leaflet-popup-tip { background: var(--panel) !important; }
+
+/* Animations */
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+@keyframes mkr-in { from { transform: scale(0.1); } to { transform: scale(1); } }
+@keyframes news-enter { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ticker-anim { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+@keyframes sp { to { transform: rotate(360deg); } }
+
+.news-enter { animation: news-enter 0.3s ease forwards; }
+.mkr-in { animation: mkr-in 200ms ease-out forwards; }
+.map-tiles { filter: saturate(0.25) brightness(0.45) hue-rotate(195deg); }
+
+/* Shared button base */
+.tb-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.15s;
+  margin: 0 2px;
+}
+.tb-btn:hover { border-color: var(--border2); color: var(--text); background: var(--panel2); }
+.tb-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* Badge colours */
+.badge-red { background: rgba(248,81,73,0.2); color: var(--red); }
+.badge-orange { background: rgba(227,112,58,0.2); color: var(--orange); }
+.badge-yellow { background: rgba(210,153,34,0.2); color: var(--yellow); }
+.badge-blue { background: rgba(31,111,235,0.2); color: var(--blue); }
+.badge-purple { background: rgba(137,87,229,0.2); color: var(--purple); }
+
+/* Spinner */
+.spin {
+  width: 12px; height: 12px;
+  border: 2px solid var(--border);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: sp 0.8s linear infinite;
+  display: inline-block;
+}
+
+/* Toast */
+.dc-toast {
+  position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+  background: var(--panel); padding: 10px 20px; border-radius: 5px;
+  font-family: var(--mono); font-size: 12px; z-index: 3000;
+  opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+.dc-toast.show { opacity: 1; }
