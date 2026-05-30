@@ -1,26 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react'
+import Hls from 'hls.js'
 
 const STREAMS = [
-  { name: 'Al Jazeera English', short: 'AJE',  channel: 'aje'  },
-  { name: 'Bloomberg TV',       short: 'BBG',  channel: 'bbg'  },
-  { name: 'DW News',            short: 'DW',   channel: 'dw'   },
-  { name: 'Sky News',           short: 'SKY',  channel: 'sky'  },
-  { name: 'France 24',          short: 'F24',  channel: 'f24'  },
-  { name: 'Euronews',           short: 'EUR',  channel: 'eur'  },
-  { name: 'CNN International',  short: 'CNN',  channel: 'cnn'  },
-  { name: 'WION',               short: 'WION', channel: 'wion' },
-];
+  { id: 'arte',      name: 'ARTE',        url: 'https://artesimulcast.akamaized.net/hls/live/2031003/artelive_en/index.m3u8' },
+  { id: 'nasa',      name: 'NASA TV',     url: 'https://nasa-i.akamaihd.net/hls/live/253565/NASA-NTV1-HLS/master.m3u8' },
+  { id: 'euronews',  name: 'Euronews EN', url: 'https://euronews-euronews-world-1-eu.rakuten.wurl.tv/playlist.m3u8' },
+  { id: 'bloomberg', name: 'Bloomberg',   url: 'https://bloomberg-bloomberg-1-us.samsung.wurl.tv/playlist.m3u8' },
+  { id: 'dw',        name: 'DW English',  url: 'https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8' },
+]
 
 export default function StreamsBar() {
-  const [current, setCurrent] = useState(0);
-  const [muted, setMuted] = useState(true);
-  // key forces iframe reload when channel or mute changes
-  const [key, setKey] = useState(0);
+  const [current, setCurrent] = useState(0)
+  const [muted, setMuted] = useState(true)
+  const videoRef = useRef(null)
+  const hlsRef = useRef(null)
 
-  const switchTo = (idx) => { setCurrent(idx); setKey((k) => k + 1); };
-  const toggleMute = () => { setMuted((m) => !m); setKey((k) => k + 1); };
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
 
-  const src = `/api/stream/${STREAMS[current].channel}${muted ? '' : '?mute=0'}`;
+    if (hlsRef.current) {
+      hlsRef.current.destroy()
+      hlsRef.current = null
+    }
+
+    const url = STREAMS[current].url
+
+    if (Hls.isSupported()) {
+      const hls = new Hls()
+      hls.loadSource(url)
+      hls.attachMedia(video)
+      hlsRef.current = hls
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = url
+    }
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy()
+        hlsRef.current = null
+      }
+    }
+  }, [current])
+
+  const thumbnails = STREAMS.map((s, i) => ({ ...s, idx: i })).filter((_, i) => i !== current).slice(0, 4)
 
   return (
     <div style={{ height: 200, background: 'var(--panel)', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
@@ -32,16 +55,16 @@ export default function StreamsBar() {
         </div>
         <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
           {STREAMS.map((s, i) => (
-            <button key={s.short} onClick={() => switchTo(i)} style={{
+            <button key={s.id} onClick={() => setCurrent(i)} style={{
               background: i === current ? 'var(--blue)' : 'var(--panel2)',
               border: '1px solid var(--border)',
               color: i === current ? '#fff' : 'var(--text3)',
               padding: '2px 7px', borderRadius: 3, fontSize: 9, fontWeight: 600,
               fontFamily: 'var(--mono)', cursor: 'pointer',
-            }}>{s.short}</button>
+            }}>{s.name}</button>
           ))}
         </div>
-        <button onClick={toggleMute} style={{ background: 'var(--panel2)', border: '1px solid var(--border)', color: muted ? 'var(--text2)' : 'var(--accent)', padding: '2px 8px', borderRadius: 3, fontSize: 10, cursor: 'pointer', fontFamily: 'var(--font)' }}>
+        <button onClick={() => setMuted(m => !m)} style={{ background: 'var(--panel2)', border: '1px solid var(--border)', color: muted ? 'var(--text2)' : 'var(--accent)', padding: '2px 8px', borderRadius: 3, fontSize: 10, cursor: 'pointer', fontFamily: 'var(--font)' }}>
           {muted ? '🔇 Muted' : '🔊 Live'}
         </button>
       </div>
@@ -50,10 +73,13 @@ export default function StreamsBar() {
       <div style={{ flex: 1, display: 'flex', gap: 1, background: 'var(--border)', overflow: 'hidden' }}>
         {/* Main player */}
         <div style={{ flex: 3, position: 'relative', background: '#000' }}>
-          <iframe key={key} src={src}
-            style={{ width: '100%', height: '100%', border: 'none' }}
-            allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"
-            allowFullScreen />
+          <video
+            ref={videoRef}
+            muted={muted}
+            autoPlay
+            playsInline
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          />
           <div style={{ position: 'absolute', bottom: 6, left: 8, background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 3, fontFamily: 'var(--mono)', pointerEvents: 'none' }}>
             {STREAMS[current].name}
           </div>
@@ -61,16 +87,16 @@ export default function StreamsBar() {
 
         {/* Thumbnails */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1, background: 'var(--border)' }}>
-          {STREAMS.slice(1, 5).map((s, i) => (
-            <div key={s.short} onClick={() => switchTo(i + 1)} style={{ flex: 1, background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', borderBottom: '1px solid var(--border)' }}
+          {thumbnails.map((s) => (
+            <div key={s.id} onClick={() => setCurrent(s.idx)} style={{ flex: 1, background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', borderBottom: '1px solid var(--border)' }}
               onMouseEnter={(e) => e.currentTarget.style.background = '#141414'}
               onMouseLeave={(e) => e.currentTarget.style.background = '#0a0a0a'}>
-              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text2)', fontFamily: 'var(--mono)' }}>{s.short}</span>
+              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text2)', fontFamily: 'var(--mono)' }}>{s.name}</span>
               <span style={{ position: 'absolute', right: 6, fontSize: 8, color: 'var(--red)' }}>● LIVE</span>
             </div>
           ))}
         </div>
       </div>
     </div>
-  );
+  )
 }
