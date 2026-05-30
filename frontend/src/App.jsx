@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Panel, PanelGroup, ResizeHandle } from 'react-resizable-panels'
+import { Panel, PanelGroup, PanelPanelResizeHandle } from 'react-resizable-panels'
 import { io } from 'socket.io-client'
 import axios from 'axios'
 import useStore from './store'
@@ -17,11 +17,11 @@ const CHANNEL_LIST = [
   'DW English', 'DW Deutsch', 'DW Español', 'DW عربي', 'Euronews',
 ]
 
-function ResizeHandleV() {
-  return <ResizeHandle className="resize-handle-v" />
+function PanelResizeHandleV() {
+  return <PanelResizeHandle className="resize-handle-v" />
 }
-function ResizeHandleH() {
-  return <ResizeHandle className="resize-handle-h" />
+function PanelResizeHandleH() {
+  return <PanelResizeHandle className="resize-handle-h" />
 }
 
 export default function App() {
@@ -52,14 +52,14 @@ export default function App() {
                 <LayerSidebar />
               </div>
             </Panel>
-            <ResizeHandleV />
+            <PanelResizeHandleV />
             <Panel defaultSize={55} minSize={20}>
               <div style={{ height: '100%', position: 'relative', overflow: 'hidden' }}>
                 {!is3D && <MapView />}
                 {is3D  && <GlobeView />}
               </div>
             </Panel>
-            <ResizeHandleV />
+            <PanelResizeHandleV />
             <Panel defaultSize={30} minSize={15}>
               <PanelGroup direction="vertical" style={{ height: '100%' }}>
                 <Panel defaultSize={60} minSize={20}>
@@ -67,7 +67,7 @@ export default function App() {
                     <NewsFeed />
                   </div>
                 </Panel>
-                <ResizeHandleH />
+                <PanelResizeHandleH />
                 <Panel defaultSize={40} minSize={15}>
                   <div style={{ height: '100%', overflow: 'hidden' }}>
                     <AIBriefing />
@@ -78,7 +78,7 @@ export default function App() {
           </PanelGroup>
         </Panel>
 
-        <ResizeHandleH />
+        <PanelResizeHandleH />
 
         {/* Bottom: StreamsBar | Channel list */}
         <Panel defaultSize={28} minSize={15} maxSize={50}>
@@ -88,7 +88,7 @@ export default function App() {
                 <StreamsBar />
               </div>
             </Panel>
-            <ResizeHandleV />
+            <PanelResizeHandleV />
             <Panel defaultSize={25} minSize={10}>
               <div style={{ height: '100%', background: 'var(--panel)', borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <div style={{ padding: '6px 12px', borderBottom: '1px solid var(--border)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
