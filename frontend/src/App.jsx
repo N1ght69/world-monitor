@@ -1,5 +1,4 @@
-import React, { useEffect } from 'react'
-import { Panel, PanelGroup, PanelPanelResizeHandle } from 'react-resizable-panels'
+import React, { useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import axios from 'axios'
 import useStore from './store'
@@ -13,15 +12,32 @@ import StreamsBar from './components/StreamsBar'
 
 let socket = null
 
-const CHANNEL_LIST = [
-  'DW English', 'DW Deutsch', 'DW Español', 'DW عربي', 'Euronews',
-]
-
-function PanelResizeHandleV() {
-  return <PanelResizeHandle className="resize-handle-v" />
+function startDrag(onMove) {
+  return (e) => {
+    e.preventDefault()
+    const move = (ev) => onMove(ev)
+    const up = () => {
+      window.removeEventListener('mousemove', move)
+      window.removeEventListener('mouseup', up)
+    }
+    window.addEventListener('mousemove', move)
+    window.addEventListener('mouseup', up)
+  }
 }
-function PanelResizeHandleH() {
-  return <PanelResizeHandle className="resize-handle-h" />
+
+function Handle({ dir, onMouseDown }) {
+  const [hover, setHover] = useState(false)
+  const base = dir === 'v'
+    ? { width: 4, cursor: 'col-resize', flexShrink: 0 }
+    : { height: 4, cursor: 'row-resize', flexShrink: 0 }
+  return (
+    <div
+      onMouseDown={onMouseDown}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{ ...base, background: hover ? '#4a90e2' : '#2a3142', transition: 'background 0.15s' }}
+    />
+  )
 }
 
 export default function App() {
@@ -29,85 +45,74 @@ export default function App() {
   const addNews   = useStore((s) => s.addNews)
   const is3D      = useStore((s) => s.is3D)
 
+  const [sidebarW,  setSidebarW]  = useState(200)
+  const [rightW,    setRightW]    = useState(340)
+  const [newsFeedH, setNewsFeedH] = useState(300)
+
+  const containerRef  = useRef(null)
+  const rightPanelRef = useRef(null)
+
   useEffect(() => {
     axios.get('/api/events').then((r) => setEvents(r.data)).catch(console.error)
     axios.get('/api/news').then((r) => addNews(r.data)).catch(console.error)
-
     socket = io({ transports: ['websocket', 'polling'] })
     socket.on('news:update', (articles) => addNews(articles))
-
     return () => socket?.disconnect()
   }, [])
+
+  const onLeftDrag = startDrag((e) => {
+    if (!containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    setSidebarW(Math.max(120, Math.min(400, e.clientX - rect.left)))
+  })
+
+  const onRightDrag = startDrag((e) => {
+    if (!containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    setRightW(Math.max(200, Math.min(600, rect.right - e.clientX)))
+  })
+
+  const onRightSplitDrag = startDrag((e) => {
+    if (!rightPanelRef.current) return
+    const rect = rightPanelRef.current.getBoundingClientRect()
+    setNewsFeedH(Math.max(80, Math.min(rect.height - 80, e.clientY - rect.top)))
+  })
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
       <TopBar />
 
-      <PanelGroup direction="vertical" style={{ flex: 1, minHeight: 0 }}>
-        {/* Middle: Sidebar | Map/Globe | News+AI */}
-        <Panel defaultSize={72} minSize={40}>
-          <PanelGroup direction="horizontal" style={{ height: '100%' }}>
-            <Panel defaultSize={15} minSize={8} maxSize={30}>
-              <div style={{ height: '100%', overflow: 'hidden' }}>
-                <LayerSidebar />
-              </div>
-            </Panel>
-            <PanelResizeHandleV />
-            <Panel defaultSize={55} minSize={20}>
-              <div style={{ height: '100%', position: 'relative', overflow: 'hidden' }}>
-                {!is3D && <MapView />}
-                {is3D  && <GlobeView />}
-              </div>
-            </Panel>
-            <PanelResizeHandleV />
-            <Panel defaultSize={30} minSize={15}>
-              <PanelGroup direction="vertical" style={{ height: '100%' }}>
-                <Panel defaultSize={60} minSize={20}>
-                  <div style={{ height: '100%', overflow: 'hidden' }}>
-                    <NewsFeed />
-                  </div>
-                </Panel>
-                <PanelResizeHandleH />
-                <Panel defaultSize={40} minSize={15}>
-                  <div style={{ height: '100%', overflow: 'hidden' }}>
-                    <AIBriefing />
-                  </div>
-                </Panel>
-              </PanelGroup>
-            </Panel>
-          </PanelGroup>
-        </Panel>
+      {/* Middle row */}
+      <div ref={containerRef} style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
+        {/* Sidebar */}
+        <div style={{ width: sidebarW, flexShrink: 0, overflow: 'hidden' }}>
+          <LayerSidebar />
+        </div>
 
-        <PanelResizeHandleH />
+        <Handle dir="v" onMouseDown={onLeftDrag} />
 
-        {/* Bottom: StreamsBar | Channel list */}
-        <Panel defaultSize={28} minSize={15} maxSize={50}>
-          <PanelGroup direction="horizontal" style={{ height: '100%' }}>
-            <Panel defaultSize={75} minSize={40}>
-              <div style={{ height: '100%', overflow: 'hidden' }}>
-                <StreamsBar />
-              </div>
-            </Panel>
-            <PanelResizeHandleV />
-            <Panel defaultSize={25} minSize={10}>
-              <div style={{ height: '100%', background: 'var(--panel)', borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <div style={{ padding: '6px 12px', borderBottom: '1px solid var(--border)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1 }}>CHANNELS</span>
-                  <span style={{ fontSize: 9, color: 'var(--red)', fontFamily: 'var(--mono)', background: 'rgba(248,81,73,0.15)', borderRadius: 3, padding: '1px 6px' }}>● LIVE</span>
-                </div>
-                <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
-                  {CHANNEL_LIST.map((name) => (
-                    <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 12px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text2)' }}>{name}</span>
-                      <span style={{ fontSize: 8, color: 'var(--red)' }}>●</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Panel>
-          </PanelGroup>
-        </Panel>
-      </PanelGroup>
+        {/* Map / Globe */}
+        <div style={{ flex: 1, position: 'relative', overflow: 'hidden', minWidth: 0 }}>
+          {!is3D && <MapView />}
+          {is3D  && <GlobeView />}
+        </div>
+
+        <Handle dir="v" onMouseDown={onRightDrag} />
+
+        {/* Right panel: NewsFeed + AIBriefing */}
+        <div ref={rightPanelRef} style={{ width: rightW, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ height: newsFeedH, flexShrink: 0, overflow: 'hidden' }}>
+            <NewsFeed />
+          </div>
+          <Handle dir="h" onMouseDown={onRightSplitDrag} />
+          <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+            <AIBriefing />
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom */}
+      <StreamsBar />
     </div>
   )
 }
