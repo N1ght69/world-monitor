@@ -1,4 +1,4 @@
-const db = require('./db');
+import db from './db.js'
 
 const EVENTS = [
   // Conflict
@@ -36,29 +36,29 @@ const EVENTS = [
   // Energy
   { name: 'Strait of Hormuz', lat: 26.5, lon: 56.3, layer: 'energy', severity: 'high', detail: '20% global oil transit. Iranian interdiction threat. US 5th Fleet patrol ongoing.' },
   { name: 'Bab-el-Mandeb', lat: 12.6, lon: 43.5, layer: 'energy', severity: 'high', detail: 'Red Sea chokepoint. Houthi disruption active. Rerouting to Cape of Good Hope adding 14 days.' },
-];
+]
 
 function seed() {
-  const count = db.prepare('SELECT COUNT(*) as c FROM events').get().c;
-  if (count > 0) return;
+  const count = db.prepare('SELECT COUNT(*) as c FROM events').get().c
+  if (count > 0) return
 
-  const now = Date.now();
+  const now = Date.now()
   const insert = db.prepare(
     'INSERT INTO events (name, lat, lon, layer, severity, detail, ts) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  );
+  )
 
   const insertMany = db.transaction((events) => {
     for (const e of events) {
-      let ts;
-      if (e.severity === 'high') ts = now - (1 + Math.random() * 4) * 3600000;
-      else if (e.severity === 'med') ts = now - (6 + Math.random() * 30) * 3600000;
-      else ts = now - (2 + Math.random() * 4) * 86400000;
-      insert.run(e.name, e.lat, e.lon, e.layer, e.severity, e.detail, Math.floor(ts));
+      let ts
+      if (e.severity === 'high') ts = now - (1 + Math.random() * 4) * 3600000
+      else if (e.severity === 'med') ts = now - (6 + Math.random() * 30) * 3600000
+      else ts = now - (2 + Math.random() * 4) * 86400000
+      insert.run(e.name, e.lat, e.lon, e.layer, e.severity, e.detail, Math.floor(ts))
     }
-  });
+  })
 
-  insertMany(EVENTS);
-  console.log(`Seeded ${EVENTS.length} events`);
+  insertMany(EVENTS)
+  console.log(`Seeded ${EVENTS.length} events`)
 }
 
-module.exports = seed;
+export default seed
