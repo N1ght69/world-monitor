@@ -39,6 +39,8 @@ export default function GlobeView() {
       const Globe = mod.default;
       globe = Globe()(containerRef.current);
       globe
+        .width(containerRef.current.offsetWidth)
+        .height(containerRef.current.offsetHeight)
         .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
         .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
         .backgroundImageUrl('https://unpkg.com/three-globe/example/img/night-sky.png')
@@ -51,10 +53,10 @@ export default function GlobeView() {
         .ringsData([])
         .ringColor('color').ringMaxRadius('maxR').ringPropagationSpeed('speed').ringRepeatPeriod('period');
 
-      globe.controls().autoRotate = true;
+      globe.controls().autoRotate = false;
       globe.controls().autoRotateSpeed = 0.4;
       globe.controls().enableZoom = true;
-      globe.pointOfView({ lat: 30, lng: 25, altitude: 2.2 }, 0);
+      globe.pointOfView({ lat: 0, lng: 0, altitude: 2.5 }, 0);
       globeRef.current = globe;
     });
 
@@ -100,6 +102,6 @@ export default function GlobeView() {
   }, [currentRegion]);
 
   return (
-    <div ref={containerRef} style={{ flex: 1, height: '100%', background: '#000408', position: 'relative' }} />
+    <div ref={containerRef} style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', background: '#000408' }} />
   );
 }
