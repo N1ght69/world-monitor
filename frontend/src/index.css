@@ -107,6 +107,30 @@ body {
   display: inline-block;
 }
 
+/* Panel resize handles */
+.resize-handle-v {
+  width: 4px;
+  background: #2a3142;
+  cursor: col-resize;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.resize-handle-v:hover,
+.resize-handle-v[data-resize-handle-active] {
+  background: #4a90e2;
+}
+.resize-handle-h {
+  height: 4px;
+  background: #2a3142;
+  cursor: row-resize;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.resize-handle-h:hover,
+.resize-handle-h[data-resize-handle-active] {
+  background: #4a90e2;
+}
+
 /* Toast */
 .dc-toast {
   position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);

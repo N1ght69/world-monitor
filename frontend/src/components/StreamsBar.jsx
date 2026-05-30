@@ -2,14 +2,11 @@ import React, { useEffect, useRef, useState } from 'react'
 import Hls from 'hls.js'
 
 const STREAMS = [
-  { id: 'bloomberg', name: 'Bloomberg',  url: 'https://bloomberg.com/media-manifest/streams/us.m3u8' },
-  { id: 'skynews',   name: 'Sky News',   url: 'https://skynews-skynewsuk-samsamznbcuni.edgecastslive.com/skynews/skynewsuk/ngrp:skynewsuk_all/playlist.m3u8' },
-  { id: 'dw',        name: 'DW English', url: 'https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8' },
-  { id: 'dw_de',     name: 'DW Deutsch', url: 'https://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/index.m3u8' },
-  { id: 'euronews',  name: 'Euronews',   url: 'https://euronews-euronews-world-1-eu.rakuten.wurl.tv/playlist.m3u8' },
-  { id: 'france24',  name: 'France 24',  url: 'https://stream.france24.com/hls/live/2037168/F24_EN_LO_HLS/master.m3u8' },
-  { id: 'aljazeera', name: 'Al Jazeera', url: 'https://live-hls-web-aje.getaj.net/AJE/01.m3u8' },
-  { id: 'cnn',       name: 'CNN Int',    url: 'https://cnn-cnninternational-1-eu.rakuten.wurl.tv/playlist.m3u8' },
+  { id: 'dw_en', name: 'DW English', url: 'https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8' },
+  { id: 'dw_de', name: 'DW Deutsch', url: 'https://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/index.m3u8' },
+  { id: 'dw_es', name: 'DW Español', url: 'https://dwamdstream105.akamaized.net/hls/live/2015531/dwstream105/index.m3u8' },
+  { id: 'dw_ar', name: 'DW عربي',    url: 'https://dwamdstream106.akamaized.net/hls/live/2015532/dwstream106/index.m3u8' },
+  { id: 'euronews', name: 'Euronews', url: 'https://euronews-euronews-world-1-eu.rakuten.wurl.tv/playlist.m3u8' },
 ]
 
 export default function StreamsBar() {
@@ -45,7 +42,7 @@ export default function StreamsBar() {
   }, [current])
 
   return (
-    <div style={{ background: 'var(--panel)', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+    <div style={{ height: '100%', background: 'var(--panel)', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 12px', borderBottom: '1px solid var(--border)', flexShrink: 0, gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
@@ -66,7 +63,7 @@ export default function StreamsBar() {
       </div>
 
       {/* Player */}
-      <div style={{ height: 200, position: 'relative', background: '#000' }}>
+      <div style={{ flex: 1, position: 'relative', background: '#000', minHeight: 0 }}>
         {error ? (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080808' }}>
             <span style={{ color: 'var(--text3)', fontSize: 11, fontFamily: 'var(--mono)' }}>{STREAMS[current].name}</span>
